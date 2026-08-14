@@ -1,0 +1,24 @@
+{
+  "name": "netscan",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "IP Scanner over rigNetScan (TCP connect).",
+  "window": { "width": 1100, "height": 700, "title": "RigKit — netscan" },
+  "dependencies": [
+    {
+      "name": "rigComponent",
+      "url": "https://github.com/rigkid/rigComponent.git",
+      "ref": "main"
+    },
+    {
+      "name": "rigImGui",
+      "url": "https://github.com/rigkid/rigImGui.git",
+      "ref": "main"
+    },
+    {
+      "name": "rigNetScan",
+      "url": "https://github.com/rigkid/rigNetScan.git",
+      "ref": "main"
+    }
+  ]
+}

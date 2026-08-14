@@ -1,0 +1,15 @@
+{
+  "name": "rigNetScan",
+  "url": "https://github.com/rigkid/rigNetScan.git",
+  "ref": "main",
+  "version": "0.1.0",
+  "author": "Rigkid",
+  "license": "MIT Rigkid Contributors",
+  "description": "CNetScan / CNetHost plus IpScannerWindow.",
+  "dependencies": [
+    "rigImGui"
+  ],
+  "include_paths": [
+    "src"
+  ]
+}
