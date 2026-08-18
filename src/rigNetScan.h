@@ -33,8 +33,9 @@ class rigNetScan : public IPack {
 
 	entt::entity scanEntity() const { return m_scanEntity; }
 
-	ecs::CNetScan& scan();
-	const ecs::CNetScan& scan() const;
+	/** @brief Job POD when engine + entity exist; null otherwise. */
+	ecs::CNetScan* tryScan();
+	const ecs::CNetScan* tryScan() const;
 
 	/** @brief Write from/to from the first non-loopback IPv4 adapter. */
 	bool fillLocalRange();

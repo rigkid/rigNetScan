@@ -102,44 +102,55 @@ void rigNetScan::setup() {
 	ecs->registerComponent<ecs::CNetHost>("NetHost", true);
 	ensureScanEntity();
 	fillLocalRange();
-	spdlog::info("[rigNetScan] setup — range {} .. {} ports {}", scan().from, scan().to,
-				 scan().ports);
+	if (auto* job = tryScan()) {
+		spdlog::info("[rigNetScan] setup — range {} .. {} ports {}", job->from, job->to,
+					 job->ports);
+	}
 }
 
 void rigNetScan::cleanup() {
-	if (m_state && m_state->nameJob.valid()) {
-		m_state->nameJob.wait();
-	}
 	abortScan();
 }
 
-ecs::CNetScan& rigNetScan::scan() {
+ecs::CNetScan* rigNetScan::tryScan() {
 	ensureScanEntity();
-	return getEngine()->getECSManager()->getComponent<ecs::CNetScan>(m_scanEntity);
+	auto* engine = getEngine();
+	if (!engine || !engine->getECSManager()) {
+		return nullptr;
+	}
+	auto* ecs = engine->getECSManager();
+	if (m_scanEntity == entt::null || !ecs->registry().valid(m_scanEntity) ||
+		!ecs->hasComponent<ecs::CNetScan>(m_scanEntity)) {
+		return nullptr;
+	}
+	return &ecs->getComponent<ecs::CNetScan>(m_scanEntity);
 }
 
-const ecs::CNetScan& rigNetScan::scan() const {
-	return const_cast<rigNetScan*>(this)->scan();
+const ecs::CNetScan* rigNetScan::tryScan() const {
+	return const_cast<rigNetScan*>(this)->tryScan();
 }
 
 bool rigNetScan::fillLocalRange() {
-	ensureScanEntity();
-	auto& job = scan();
-	std::string err;
-	if (!netscan::detectLocalIpv4Range(job.from, job.to, &err)) {
-		m_lastError = err.empty() ? "no local IPv4 range" : err;
-		job.from = "127.0.0.1";
-		job.to = "127.0.0.1";
-		job.status = "loopback (no LAN adapter)";
+	auto* job = tryScan();
+	if (!job) {
 		return false;
 	}
-	job.status = "idle";
+	std::string err;
+	if (!netscan::detectLocalIpv4Range(job->from, job->to, &err)) {
+		m_lastError = err.empty() ? "no local IPv4 range" : err;
+		job->from = "127.0.0.1";
+		job->to = "127.0.0.1";
+		job->status = "loopback (no LAN adapter)";
+		return false;
+	}
+	job->status = "idle";
 	m_lastError.clear();
 	return true;
 }
 
 void rigNetScan::clearHosts() {
-	auto* ecs = getEngine()->getECSManager();
+	auto* engine = getEngine();
+	auto* ecs = engine ? engine->getECSManager() : nullptr;
 	if (!ecs) {
 		return;
 	}
@@ -157,6 +168,9 @@ void rigNetScan::abortScan() {
 	if (!m_state) {
 		return;
 	}
+	if (m_state->nameJob.valid()) {
+		m_state->nameJob.wait();
+	}
 	for (auto& p : m_state->inflight) {
 		p.close();
 	}
@@ -167,57 +181,64 @@ void rigNetScan::abortScan() {
 
 void rigNetScan::finishScan() {
 	abortScan();
-	auto& job = scan();
-	job.running = false;
-	job.done = m_state->ipsDone;
-	job.total = m_state->ipsTotal;
-	job.aliveCount = 0;
+	auto* job = tryScan();
+	if (!job) {
+		return;
+	}
+	job->running = false;
+	job->done = m_state->ipsDone;
+	job->total = m_state->ipsTotal;
+	job->aliveCount = 0;
 	for (const auto& kv : m_state->hosts) {
 		if (kv.second.alive) {
-			++job.aliveCount;
+			++job->aliveCount;
 		}
 	}
-	job.status = "done";
+	job->status = "done";
 }
 
 bool rigNetScan::beginScan() {
-	auto& job = scan();
+	auto* job = tryScan();
+	if (!job) {
+		m_lastError = "no scan entity";
+		return false;
+	}
 	m_lastError.clear();
-	if (job.timeoutMs < 20) {
-		job.timeoutMs = 20;
+	if (job->timeoutMs < 20) {
+		job->timeoutMs = 20;
 	}
-	if (job.maxInFlight < 1) {
-		job.maxInFlight = 1;
+	if (job->maxInFlight < 1) {
+		job->maxInFlight = 1;
 	}
-	if (job.maxInFlight > kMaxInFlight) {
-		job.maxInFlight = kMaxInFlight;
+	if (job->maxInFlight > kMaxInFlight) {
+		job->maxInFlight = kMaxInFlight;
 	}
 
 	uint32_t from = 0;
 	uint32_t to = 0;
-	if (!netscan::parseIpv4(job.from, from) || !netscan::parseIpv4(job.to, to)) {
+	if (!netscan::parseIpv4(job->from, from) || !netscan::parseIpv4(job->to, to)) {
 		m_lastError = "invalid IPv4 range";
-		job.running = false;
-		job.status = m_lastError;
+		job->running = false;
+		job->status = m_lastError;
 		return false;
 	}
 	if (from > to) {
 		std::swap(from, to);
-		job.from = netscan::formatIpv4(from);
-		job.to = netscan::formatIpv4(to);
+		job->from = netscan::formatIpv4(from);
+		job->to = netscan::formatIpv4(to);
 	}
-	const auto ports = netscan::parsePorts(job.ports);
+	const auto ports = netscan::parsePorts(job->ports);
 	if (ports.empty()) {
 		m_lastError = "no TCP ports";
-		job.running = false;
-		job.status = m_lastError;
+		job->running = false;
+		job->status = m_lastError;
 		return false;
 	}
 
 	uint64_t count = static_cast<uint64_t>(to) - static_cast<uint64_t>(from) + 1;
 	if (count > static_cast<uint64_t>(kMaxRange)) {
 		to = from + static_cast<uint32_t>(kMaxRange - 1);
-		job.to = netscan::formatIpv4(to);
+		job->to = netscan::formatIpv4(to);
 		count = kMaxRange;
 		spdlog::warn("[rigNetScan] range capped at {} addresses", kMaxRange);
 	}
@@ -228,8 +249,8 @@ bool rigNetScan::beginScan() {
 	m_state->hosts.clear();
 	m_state->ipsDone = 0;
 	m_state->ipsTotal = static_cast<int>(count);
-	m_state->timeoutMs = job.timeoutMs;
-	m_state->maxInFlight = job.maxInFlight;
+	m_state->timeoutMs = job->timeoutMs;
+	m_state->maxInFlight = job->maxInFlight;
 
 	for (uint32_t ip = from; ip <= to; ++ip) {
 		auto& acc = m_state->hosts[ip];
@@ -242,18 +263,19 @@ bool rigNetScan::beginScan() {
 		}
 	}
 
-	job.done = 0;
-	job.total = m_state->ipsTotal;
-	job.aliveCount = 0;
-	job.status = "scanning";
+	job->done = 0;
+	job->total = m_state->ipsTotal;
+	job->aliveCount = 0;
+	job->status = "scanning";
 	m_state->scanning = true;
-	spdlog::info("[rigNetScan] scan {} .. {} ({} hosts, {} ports)", job.from, job.to,
+	spdlog::info("[rigNetScan] scan {} .. {} ({} hosts, {} ports)", job->from, job->to,
 				 m_state->ipsTotal, ports.size());
 	return true;
 }
 
 void rigNetScan::writeHost(uint32_t ip) {
-	auto* ecs = getEngine()->getECSManager();
+	auto* engine = getEngine();
+	auto* ecs = engine ? engine->getECSManager() : nullptr;
 	if (!ecs) {
 		return;
 	}
@@ -322,7 +344,8 @@ void rigNetScan::pumpNames() {
 		ecs->getComponent<ecs::CNetHost>(it->second.entity).hostname = result.second;
 	}
 
-	if (!scan().resolveNames) {
+	const auto* job = tryScan();
+	if (!job || !job->resolveNames) {
 		return;
 	}
 	auto* ecs = getEngine()->getECSManager();
@@ -380,25 +403,33 @@ void rigNetScan::pumpProbes() {
 }
 
 void rigNetScan::update(float) {
-	ensureScanEntity();
-	auto& job = scan();
-	if (job.running && !m_state->scanning) {
+	auto* job = tryScan();
+	if (!job || !m_state) {
+		return;
+	}
+	if (job->running && !m_state->scanning) {
 		if (!beginScan()) {
 			return;
 		}
 	}
-	if (!job.running && m_state->scanning) {
+	if (!job->running && m_state->scanning) {
 		finishScan();
-		job.status = "stopped";
+		if (auto* j = tryScan()) {
+			j->status = "stopped";
+		}
 	}
 	if (m_state->scanning) {
 		pumpProbes();
-		job.done = m_state->ipsDone;
-		job.total = m_state->ipsTotal;
-		job.aliveCount = 0;
+		job = tryScan();
+		if (!job) {
+			return;
+		}
+		job->done = m_state->ipsDone;
+		job->total = m_state->ipsTotal;
+		job->aliveCount = 0;
 		for (const auto& kv : m_state->hosts) {
 			if (kv.second.alive) {
-				++job.aliveCount;
+				++job->aliveCount;
 			}
 		}
 		if (m_state->queue.empty() && m_state->inflight.empty()) {
@@ -416,24 +447,31 @@ bool rigNetScan::smokeLoopback() {
 		return false;
 	}
 
-	auto& job = scan();
-	job.from = "127.0.0.1";
-	job.to = "127.0.0.1";
-	job.ports = std::to_string(port);
-	job.timeoutMs = 400;
-	job.maxInFlight = 4;
-	job.resolveNames = false;
-	job.running = true;
+	auto* job = tryScan();
+	if (!job) {
+		netscan::closeSocket(listen);
+		m_lastError = "smoke: no scan entity";
+		return false;
+	}
+	job->from = "127.0.0.1";
+	job->to = "127.0.0.1";
+	job->ports = std::to_string(port);
+	job->timeoutMs = 400;
+	job->maxInFlight = 4;
+	job->resolveNames = false;
+	job->running = true;
 
 	bool ok = false;
 	for (int i = 0; i < 400; ++i) {
 		update(0.016f);
-		if (!job.running) {
+		job = tryScan();
+		if (!job || !job->running) {
 			break;
 		}
 	}
 
-	auto* ecs = getEngine()->getECSManager();
+	auto* engine = getEngine();
+	auto* ecs = engine ? engine->getECSManager() : nullptr;
 	if (ecs) {
 		const std::string want = std::to_string(port);
 		for (auto e : ecs->view<ecs::CNetHost>()) {

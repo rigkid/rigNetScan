@@ -57,8 +57,12 @@ void IpScannerWindow::renderContents() {
 		ImGui::TextDisabled("rigNetScan not loaded");
 		return;
 	}
+	auto* job = scanPack->tryScan();
+	if (!job) {
+		ImGui::TextDisabled("rigNetScan job not ready");
+		return;
+	}
 
-	auto& job = scanPack->scan();
 	auto* ecs = engine->getECSManager();
 	const float ipW = textFieldWidth("255.255.255.255");
 	const float portsW = textFieldWidth("80,443,8000,8080,9000");
@@ -68,13 +72,13 @@ void IpScannerWindow::renderContents() {
 	ImGui::TextUnformatted("From");
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(ipW);
-	inputTextStd("##from", job.from);
+	inputTextStd("##from", job->from);
 	ImGui::SameLine();
 	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted("to");
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(ipW);
-	inputTextStd("##to", job.to);
+	inputTextStd("##to", job->to);
 	ImGui::SameLine();
 	if (ImGui::Button("Local subnet")) {
 		scanPack->fillLocalRange();
@@ -84,37 +88,37 @@ void IpScannerWindow::renderContents() {
 	ImGui::TextUnformatted("Ports");
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(portsW);
-	inputTextStd("##ports", job.ports);
+	inputTextStd("##ports", job->ports);
 	ImGui::SameLine();
 	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted("Timeout ms");
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(timeoutW);
-	ImGui::InputInt("##timeout", &job.timeoutMs, 0, 0);
-	if (job.timeoutMs < 20) {
-		job.timeoutMs = 20;
+	ImGui::InputInt("##timeout", &job->timeoutMs, 0, 0);
+	if (job->timeoutMs < 20) {
+		job->timeoutMs = 20;
 	}
 
-	if (!job.running) {
+	if (!job->running) {
 		if (ImGui::Button("Scan")) {
-			job.running = true;
+			job->running = true;
 		}
 	} else {
 		if (ImGui::Button("Stop")) {
-			job.running = false;
+			job->running = false;
 		}
 	}
 	ImGui::SameLine();
 	ImGui::Checkbox("Alive only", &m_aliveOnly);
 	ImGui::SameLine();
-	ImGui::Checkbox("Resolve names", &job.resolveNames);
+	ImGui::Checkbox("Resolve names", &job->resolveNames);
 
 	const float frac =
-		(job.total > 0) ? static_cast<float>(job.done) / static_cast<float>(job.total) : 0.f;
+		(job->total > 0) ? static_cast<float>(job->done) / static_cast<float>(job->total) : 0.f;
 	ImGui::ProgressBar(frac, ImVec2(-1.f, 0.f));
-	ImGui::Text("Status: %s   %d / %d hosts   %d alive", job.status.c_str(), job.done, job.total,
-				job.aliveCount);
-	if (!scanPack->lastError().empty() && job.status != "scanning") {
+	ImGui::Text("Status: %s   %d / %d hosts   %d alive", job->status.c_str(), job->done, job->total,
+				job->aliveCount);
+	if (!scanPack->lastError().empty() && job->status != "scanning") {
 		ImGui::TextColored(ImVec4(1.f, 0.45f, 0.35f, 1.f), "%s", scanPack->lastError().c_str());
 	}
 
@@ -141,10 +145,10 @@ void IpScannerWindow::renderContents() {
 	std::sort(rows.begin(), rows.end(),
 			  [](const HostRow& a, const HostRow& b) { return a.ipn < b.ipn; });
 
-	const ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg |
-								  ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders |
-								  ImGuiTableFlags_SizingStretchProp;
-	// ScrollY needs a real height. Clipper + auto-sized columns crashes on resize.
+	// No Resizable: ScrollY + stretch columns + drag-resize asserts / AV in imgui_tables.
+	const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY |
+								  ImGuiTableFlags_Borders | ImGuiTableFlags_SizingStretchProp |
+								  ImGuiTableFlags_NoSavedSettings;
 	const float tableH =
 		(std::max)(ImGui::GetContentRegionAvail().y, ImGui::GetFrameHeight() * 4.f);
 	if (ImGui::BeginTable("nethosts", 6, flags, ImVec2(0.f, tableH))) {
