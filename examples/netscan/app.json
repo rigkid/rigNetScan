@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "description": "IP Scanner over rigNetScan (TCP connect).",
-  "window": { "width": 1100, "height": 700, "title": "RigKit — netscan" },
+  "window": { "width": 1100, "height": 700, "title": "RigKit - netscan" },
   "dependencies": [
     {
       "name": "rigComponent",

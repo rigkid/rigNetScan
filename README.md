@@ -5,9 +5,9 @@
 LAN TCP connect scan for controller troubleshooting.
 Sockets stay in this pack, never on the POD.
 
-- `CNetScan` — range, ports, timeout, `running`
-- `CNetHost` — one IPv4 row (alive, RTT, open ports)
-- `IpScannerWindow` — one registerable panel (needs **rigImGui**)
+- `CNetScan` - range, ports, timeout, `running`
+- `CNetHost` - one IPv4 row (alive, RTT, open ports)
+- `IpScannerWindow` - one registerable panel (needs **rigImGui**)
 - Non-blocking TCP connect in Update (chunked)
 - Range capped at 4096 addresses. Default ports `80,443,8000`
 

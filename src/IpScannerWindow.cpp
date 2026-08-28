@@ -1,18 +1,19 @@
 #include "IpScannerWindow.h"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstring>
-#include <string>
-#include <vector>
-#include <imgui.h>
+#include "core/pack/MPack.h"
+#include "core/RigKitEngine.h"
+#include "ecs/MEcs.h"
 #include "CNetHost.h"
 #include "CNetScan.h"
 #include "NetIo.h"
-#include "core/RigKitEngine.h"
-#include "core/pack/MPack.h"
-#include "ecs/MEcs.h"
 #include "rigNetScan.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
+#include <imgui.h>
+#include <string>
+#include <vector>
 
 namespace rigkit {
 namespace {

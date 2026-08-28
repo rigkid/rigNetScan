@@ -1,22 +1,23 @@
 #include "app.h"
 
-#include "rendering/U_gladGlfw.h"
-#include <cstdlib>
-#include <iostream>
-#include <spdlog/spdlog.h>
-#include "core/RigKitEngine.h"
 #include "core/pack/MPack.h"
-#include "imgui_internal.h"
+#include "core/RigKitEngine.h"
+#include "rendering/U_gladGlfw.h"
 #include "packs/rigComponent/src/rigComponent.h"
 #include "packs/rigImGui/src/Mui.h"
 #include "packs/rigImGui/src/rigImGui.h"
 #include "packs/rigNetScan/src/IpScannerWindow.h"
 #include "packs/rigNetScan/src/rigNetScan.h"
+#include "imgui_internal.h"
+
+#include <cstdlib>
+#include <iostream>
+#include <spdlog/spdlog.h>
 
 NetscanApp::NetscanApp() {
 	window().width = 1100;
 	window().height = 700;
-	window().title = "RigKit — netscan";
+	window().title = "RigKit - netscan";
 	settings().appName = "netscan";
 }
 
@@ -27,7 +28,7 @@ void NetscanApp::parseCommandLineArgs(const rigkit::CommandLineArgs& args) {
 		m_smoke = true;
 	}
 	if (args.hasFlag("help") || args.hasFlag("h")) {
-		std::cout << "netscan — LAN TCP connect scanner (rigNetScan)\n\n"
+		std::cout << "netscan - LAN TCP connect scanner (rigNetScan)\n\n"
 				  << "  --smoke-netscan   Listen on loopback, scan 127.0.0.1, exit\n"
 				  << "  --help\n";
 		std::exit(0);
@@ -50,7 +51,7 @@ void NetscanApp::bootstrapPacks() {
 void NetscanApp::setupUi() {
 	auto* ui = getEngine()->getUiManager();
 	if (!ui) {
-		spdlog::warn("netscan: no IMui — rigImGui failed to attach");
+		spdlog::warn("netscan: no IMui - rigImGui failed to attach");
 		return;
 	}
 	auto* mui = dynamic_cast<rigkit::Mui*>(ui);

@@ -8,7 +8,7 @@ namespace rigkit {
 namespace ecs {
 
 /**
- * @brief One IPv4 address on the LAN — data only.
+ * @brief One IPv4 address on the LAN - data only.
  * @details Written by **rigNetScan** from TCP connect results. `alive` is true
  * when a port opened or refused (host answered). Timeout-only rows stay dead.
  * Prefer one entity per address. Host extension (`x.rigkit.net_host`).

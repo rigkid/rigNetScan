@@ -12,7 +12,7 @@ enum class ProbeResult { Pending, Open, Refused, Timeout, Error };
 
 /**
  * @brief One in-flight TCP connect (Winsock / BSD).
- * @details Handle stays here — never on CNetHost. Call @ref startup once
+ * @details Handle stays here - never on CNetHost. Call @ref startup once
  * before the first @ref begin (WSAStartup on Windows).
  */
 class TcpConnect {
@@ -60,7 +60,7 @@ std::vector<int> parsePorts(const std::string& csv);
 
 /**
  * @brief http(s) URL when port 80 or 443 accepted connect.
- * @details 443 → `https://ip/` ; else 80 → `http://ip/`. Empty when neither.
+ * @details 443 to `https://ip/` ; else 80 to `http://ip/`. Empty when neither.
  */
 std::string webUrl(const std::string& ip, const std::string& openPortsCsv);
 

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
 #include "core/pack/IPack.h"
 #include "ecs/MEcs.h"
 
@@ -16,10 +17,10 @@ struct CNetHost;
 /**
  * @brief LAN TCP connect scan for controller troubleshooting.
  * @details Owns sockets. POD is @ref ecs::CNetScan (job) and @ref ecs::CNetHost
- * (one row per IPv4). ICMP is not the floor — TCP connect works on Pi without
+ * (one row per IPv4). ICMP is not the floor - TCP connect works on Pi without
  * CAP_NET_RAW. Set `CNetScan::running` to start or stop; probes run in Update.
  *
- * No `rig.*` schema yet — travel as `x.rigkit.net_scan` / `x.rigkit.net_host`.
+ * No `rig.*` schema yet - travel as `x.rigkit.net_scan` / `x.rigkit.net_host`.
  */
 class rigNetScan : public IPack {
   public:

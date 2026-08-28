@@ -8,7 +8,7 @@ namespace rigkit {
 namespace ecs {
 
 /**
- * @brief One LAN scan job — data only.
+ * @brief One LAN scan job - data only.
  * @details Range and ports are the intent. `running` / `done` / `total` /
  * `status` are written by **rigNetScan** while the probe runs. Sockets stay
  * in the pack. Host extension until RigWorks names a LAN-host schema

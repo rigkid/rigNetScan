@@ -1,21 +1,22 @@
 #include "rigNetScan.h"
 
+#include "core/pack/PackRegistry.h"
+#include "core/RigKitEngine.h"
+#include "CNetHost.h"
+#include "CNetScan.h"
+#include "NetIo.h"
+
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <deque>
 #include <future>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <spdlog/spdlog.h>
-#include "CNetHost.h"
-#include "CNetScan.h"
-#include "NetIo.h"
-#include "core/RigKitEngine.h"
-#include "core/pack/PackRegistry.h"
 
 namespace rigkit {
 namespace {
@@ -103,7 +104,7 @@ void rigNetScan::setup() {
 	ensureScanEntity();
 	fillLocalRange();
 	if (auto* job = tryScan()) {
-		spdlog::info("[rigNetScan] setup — range {} .. {} ports {}", job->from, job->to,
+		spdlog::info("[rigNetScan] setup - range {} .. {} ports {}", job->from, job->to,
 					 job->ports);
 	}
 }

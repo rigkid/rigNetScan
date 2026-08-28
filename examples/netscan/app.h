@@ -1,9 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "core/IApp.h"
 #include "core/util/CommandLineArgs.h"
-
-#include <memory>
 
 namespace rigkit {
 class rigNetScan;
