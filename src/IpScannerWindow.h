@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IWindow.h"
+#include "ImGuiPanel.h"
 namespace rigkit {
 
 /**
@@ -9,7 +9,7 @@ namespace rigkit {
  * `wm->createWindow<IpScannerWindow>()`. Title is `kTitle`. Looks up
  * `rigNetScan` on the engine - do not pass the pack in.
  */
-class IpScannerWindow : public IWindow {
+class IpScannerWindow : public ImGuiPanel {
   public:
 	static constexpr const char* kTitle = "IP Scanner";
 

@@ -45,7 +45,7 @@ struct HostRow {
 
 } // namespace
 
-IpScannerWindow::IpScannerWindow() : IWindow(kTitle, 0) {}
+IpScannerWindow::IpScannerWindow() : ImGuiPanel(kTitle, 0) {}
 
 void IpScannerWindow::renderContents() {
 	auto* engine = getEngine();
